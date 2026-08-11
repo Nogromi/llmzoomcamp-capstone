@@ -1,0 +1,53 @@
+services:
+
+  app:
+    build:
+      context: .
+
+    ports:
+      - "8501:8501"
+
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      PREFECT_API_URL: http://prefect:4200/api
+
+    depends_on:
+      - elasticsearch
+      - prefect
+
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.0
+
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+
+    ports:
+      - "9200:9200"
+
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+
+  prefect:
+    image: prefecthq/prefect:3-latest
+
+    command:
+      - prefect
+      - server
+      - start
+      - --host
+      - 0.0.0.0
+
+    ports:
+      - "4200:4200"
+
+    volumes:
+      - prefect_data:/root/.prefect
+
+
+volumes:
+  elasticsearch_data:
+  prefect_data:
