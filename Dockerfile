@@ -20,12 +20,4 @@ RUN uv sync --locked
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-CMD [
-    "uv",
-    "run",
-    "streamlit",
-    "run",
-    "src/dlmm_position_lab/app.py",
-    "--server.address=0.0.0.0",
-    "--server.port=8501"
-]
+CMD ["uv", "run", "streamlit", "run", "src/dlmm_position_lab/app.py", "--server.address=0.0.0.0", "--server.port=8501"]
