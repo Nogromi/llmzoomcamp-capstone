@@ -1,107 +1,156 @@
-"""Prefect flow for downloading and chunking Meteora DLMM documentation."""
+"""Download official DLMM Markdown pages and rebuild the search index."""
 
+import hashlib
+import json
+import re
+import unicodedata
 from pathlib import Path
 
-from prefect import flow, get_run_logger, task
+import httpx
+from elasticsearch.helpers import bulk
 
-from dlmm_position_lab.embeddings import embed_texts, embedding_text
-from dlmm_position_lab.indexing import create_client, index_documents
-from dlmm_position_lab.ingestion import (
-    DOCUMENTATION_INDEX_URL,
-    DocumentationChunk,
-    chunk_sections,
-    discover_documentation_urls,
-    documentation_urls_from_env,
-    download_page,
-    parse_document,
-    save_documents,
+from dlmm_position_lab.retrieval import (
+    EMBEDDING_DIMENSIONS,
+    INDEX_NAME,
+    create_client,
+    embed_texts,
 )
 
-
-@task(retries=3, retry_delay_seconds=5, name="download-documentation-page")
-def download_documentation_page(url: str) -> str:
-    """Download one documentation page, retrying transient HTTP failures."""
-    logger = get_run_logger()
-    logger.info("Downloading %s", url)
-    return download_page(url)
+DOCS_INDEX = "https://docs.meteora.ag/llms.txt"
+DLMM_PREFIX = "https://docs.meteora.ag/core-products/dlmm/"
 
 
-@task(retries=3, retry_delay_seconds=5, name="discover-documentation-pages")
-def discover_documentation_pages(index_url: str) -> list[str]:
-    """Read Meteora's official index and select its core DLMM documentation."""
-    logger = get_run_logger()
-    logger.info("Discovering DLMM documentation from %s", index_url)
-    urls = discover_documentation_urls(download_page(index_url))
-    logger.info("Discovered %d DLMM documentation pages", len(urls))
-    return urls
+def clean_text(text: str) -> str:
+    text = re.sub(r"!\[[^]]*\]\([^)]+\)", "", text)
+    text = re.sub(r"\[([^]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"\b(?:math|text)\s+theme=\{[\"']system[\"']\}\s*", "", text)
+    text = re.sub(r"^\s*(?:[-*+]|\d+[.)])\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"[*_]{1,2}([^*_]+)[*_]{1,2}", r"\1", text).replace("`", "")
+    text = "".join(c for c in text if unicodedata.category(c) != "Cf")
+    return " ".join(text.split())
 
 
-@task(name="parse-and-chunk-page")
-def parse_and_chunk_page(url: str, content: str) -> list[DocumentationChunk]:
-    """Extract sections from a page and split them into deterministic chunks."""
-    page = parse_document(content, url)
-    chunks = chunk_sections(page)
-    get_run_logger().info(
-        "Created %d chunks from %d sections on %s",
-        len(chunks),
-        len(page.sections),
-        url,
-    )
+def split_text(text: str) -> list[str]:
+    """Chunks of up to 900 characters with 20 words of overlap."""
+    words, chunks, start = text.split(), [], 0
+    while start < len(words):
+        end, length = start, 0
+        while end < len(words):
+            added = len(words[end]) + (end > start)
+            if end > start and length + added > 900:
+                break
+            length += added
+            end += 1
+        chunks.append(" ".join(words[start:end]))
+        if end == len(words):
+            break
+        start = max(start + 1, end - 20)
     return chunks
 
 
-@task(name="save-documentation")
-def save_documentation(
-    chunks: list[DocumentationChunk], output_path: str
-) -> None:
-    """Write all chunks as reproducible, human-readable JSON."""
-    save_documents(chunks, Path(output_path))
-    get_run_logger().info("Saved %d chunks to %s", len(chunks), output_path)
+def parse_document(markdown: str, url: str) -> list[dict]:
+    markdown = re.sub(
+        r"\A---\s*\n.*?\n---\s*\n", "", markdown, count=1, flags=re.DOTALL
+    )
+    title = re.search(r"^#\s+(.+?)\s*#*\s*$", markdown, re.MULTILINE)
+    source_url = url.removesuffix(".md")
+    title = clean_text(title.group(1)) if title else source_url
+    parts = re.split(r"^#{1,6}\s+(.+?)\s*#*\s*$", markdown, flags=re.MULTILINE)
+    sections = []
+    for heading, body in zip(parts[1::2], parts[2::2]):
+        text = clean_text(body)
+        if text and text.casefold().rstrip(".! ") not in {
+            "was this page helpful?",
+            "copy page",
+            "ask ai",
+            "on this page",
+            "previous",
+            "next",
+        }:
+            sections.append((clean_text(heading), text))
+    if not sections:
+        raise ValueError(f"No documentation sections found at {url}")
+    chunks = []
+    for section_number, (section, text) in enumerate(sections):
+        for chunk_number, chunk in enumerate(split_text(text)):
+            location = f"{source_url}\n{section_number}\n{section}\n{chunk_number}"
+            chunks.append(
+                {
+                    "id": hashlib.sha256(location.encode()).hexdigest()[:24],
+                    "title": title,
+                    "section": section,
+                    "url": source_url,
+                    "text": chunk,
+                }
+            )
+    return chunks
 
 
-@task(retries=3, retry_delay_seconds=5, name="create-document-embeddings")
-def create_document_embeddings(chunks: list[DocumentationChunk]) -> list[list[float]]:
-    """Generate semantic vectors for every documentation chunk."""
-    texts = [embedding_text(chunk.title, chunk.section, chunk.text) for chunk in chunks]
-    vectors = embed_texts(texts)
-    get_run_logger().info("Generated %d document embeddings", len(vectors))
-    return vectors
+def ingest_meteora_docs() -> None:
+    with httpx.Client(timeout=30, follow_redirects=True) as http:
+        response = http.get(DOCS_INDEX)
+        response.raise_for_status()
+        urls = list(
+            dict.fromkeys(
+                url
+                for url in re.findall(r"\[[^]]+\]\((https://[^)]+)\)", response.text)
+                if url.startswith(DLMM_PREFIX)
+            )
+        )
+        if not urls:
+            raise ValueError("No DLMM pages found in the documentation index.")
+        chunks = []
+        for url in urls:
+            print(f"Downloading {url}")
+            response = http.get(url if url.endswith(".md") else f"{url}.md")
+            response.raise_for_status()
+            chunks.extend(parse_document(response.text, url))
 
-
-@task(retries=3, retry_delay_seconds=5, name="index-documentation")
-def index_documentation(
-    chunks: list[DocumentationChunk], embeddings: list[list[float]]
-) -> int:
-    """Bulk upsert documentation chunks into Elasticsearch."""
+    vectors = embed_texts(
+        [f"{c['title']}\n{c['section']}\n{c['text']}" for c in chunks]
+    )
+    if len(vectors) != len(chunks):
+        raise RuntimeError("The number of embeddings does not match the chunks.")
     with create_client() as client:
-        indexed = index_documents(client, chunks, embeddings=embeddings)
-    get_run_logger().info("Indexed %d chunks into Elasticsearch", indexed)
-    return indexed
-
-
-@flow(name="meteora-docs-ingestion", log_prints=True)
-def ingest_meteora_docs(
-    urls: list[str] | None = None,
-    index_url: str = DOCUMENTATION_INDEX_URL,
-    output_path: str = "data/documents.json",
-) -> list[DocumentationChunk]:
-    """Download, parse, save, and index a configured set of Meteora docs."""
-    source_urls = urls or documentation_urls_from_env()
-    if not source_urls:
-        source_urls = discover_documentation_pages(index_url)
-    logger = get_run_logger()
-    logger.info("Ingesting %d Meteora documentation pages", len(source_urls))
-
-    all_chunks: list[DocumentationChunk] = []
-    for url in source_urls:
-        content = download_documentation_page(url)
-        all_chunks.extend(parse_and_chunk_page(url, content))
-
-    save_documentation(all_chunks, output_path)
-    embeddings = create_document_embeddings(all_chunks)
-    index_documentation(all_chunks, embeddings)
-    logger.info("Documentation ingestion complete: %d chunks", len(all_chunks))
-    return all_chunks
+        client.indices.delete(index=INDEX_NAME, ignore_unavailable=True)
+        client.indices.create(
+            index=INDEX_NAME,
+            settings={"number_of_shards": 1, "number_of_replicas": 0},
+            mappings={
+                "properties": {
+                    "id": {"type": "keyword"},
+                    "url": {"type": "keyword"},
+                    "title": {"type": "text"},
+                    "section": {"type": "text"},
+                    "text": {"type": "text"},
+                    "embedding": {
+                        "type": "dense_vector",
+                        "dims": EMBEDDING_DIMENSIONS,
+                        "index": True,
+                        "similarity": "cosine",
+                    },
+                }
+            },
+        )
+        bulk(
+            client,
+            [
+                {
+                    "_index": INDEX_NAME,
+                    "_id": chunk["id"],
+                    "_source": {**chunk, "embedding": vector},
+                }
+                for chunk, vector in zip(chunks, vectors, strict=True)
+            ],
+            refresh="wait_for",
+        )
+    output = Path("data/documents.json")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(chunks, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    print(f"Indexed {len(chunks)} chunks from {len(urls)} pages. Saved {output}.")
 
 
 if __name__ == "__main__":

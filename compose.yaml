@@ -1,5 +1,4 @@
 services:
-
   app:
     build:
       context: .
@@ -9,7 +8,6 @@ services:
 
     environment:
       ELASTICSEARCH_URL: http://elasticsearch:9200
-      PREFECT_API_URL: http://prefect:4200/api
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
       OPENAI_EMBEDDING_DIMENSIONS: ${OPENAI_EMBEDDING_DIMENSIONS:-512}
@@ -20,13 +18,10 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
-      prefect:
-        condition: service_started
 
     volumes:
       - ./data:/app/data
       - ./evaluation:/app/evaluation
-
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:9.1.0
@@ -49,24 +44,5 @@ services:
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
 
-
-  prefect:
-    image: prefecthq/prefect:3-latest
-
-    command:
-      - prefect
-      - server
-      - start
-      - --host
-      - 0.0.0.0
-
-    ports:
-      - "4200:4200"
-
-    volumes:
-      - prefect_data:/root/.prefect
-
-
 volumes:
   elasticsearch_data:
-  prefect_data:

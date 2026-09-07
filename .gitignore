@@ -12,3 +12,4 @@ wheels/
 .env
 data/documents.json
 data/application.db*
+.ruff_cache/

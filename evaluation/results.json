@@ -1,20 +1,202 @@
-[
-  {
-    "retriever": "BM25",
-    "questions": 30,
-    "hit_rate_at_5": 0.8666666666666667,
-    "mrr": 0.5888888888888889
-  },
-  {
-    "retriever": "Vector",
-    "questions": 30,
-    "hit_rate_at_5": 1.0,
-    "mrr": 0.8844444444444444
-  },
-  {
-    "retriever": "Hybrid",
-    "questions": 30,
-    "hit_rate_at_5": 1.0,
-    "mrr": 0.7833333333333333
+{
+  "retrieval": [
+    {
+      "retriever": "bm25",
+      "questions": 30,
+      "hit_rate_at_5": 0.8666666666666667,
+      "mrr": 0.5888888888888889
+    },
+    {
+      "retriever": "vector",
+      "questions": 30,
+      "hit_rate_at_5": 1.0,
+      "mrr": 0.8844444444444445
+    },
+    {
+      "retriever": "hybrid",
+      "questions": 30,
+      "hit_rate_at_5": 1.0,
+      "mrr": 0.7833333333333333
+    }
+  ],
+  "quality": {
+    "rag_pass_rate": 1.0,
+    "tool_call_accuracy": 1.0,
+    "rag_cases": [
+      {
+        "question": "What is a bin step and how does its size affect a pool?",
+        "answer": "The bin step is the pool\u2019s configured step size (measured in basis points) that sets the percentage difference between neighboring bins \u2014 price of bin i is Pi = (1 + bin step/10,000)^i \u2014 so a 25 bps step makes each adjacent bin \u22480.25% apart [2]. Think of it like the AMM tick size: smaller bin steps create tighter, more continuous price intervals while larger steps create wider jumps between bins [3].\n\nStep size affects how liquidity is deployed and how the pool behaves: smaller steps are suited to stable, highly liquid pairs (they capture more continuous trading but require more bins to cover a range), while larger steps suit volatile pairs (fewer bins cover a wider range) [3]. The bin step also factors into the pool\u2019s base fee and fee strategy\u2014lower base fees (often with smaller steps) can attract volume, higher base fees (often with larger steps) earn more per unit volume, and DLMM\u2019s dynamic fees can further raise total fees when volatility increases; fees are computed per bin so only bins crossed by swaps earn those fees [1][5].",
+        "checks": {
+          "has_answer": true,
+          "has_sources": true,
+          "valid_citations": true,
+          "expected_document_retrieved": true
+        },
+        "passed": true
+      },
+      {
+        "question": "How do DLMM dynamic fees respond to volatility?",
+        "answer": "DLMM charges a base (minimum) fee plus a variable fee that rises when the pool appears more volatile: specifically, when swaps cross more bins or happen in quick succession, the variable fee can increase so LPs capture more value while taking extra risk; as activity slows the volatility measurement decays and fees cool back toward the base fee [1]. This behavior is used especially during launches or other high\u2011activity periods to protect LPs from sudden price moves [1].\n\nChoose base fee and bin step with volatility in mind: bin step helps set the base-fee/market granularity (smaller steps for tight, active markets; larger steps for wider, more volatile markets), and dynamic fees then raise total fees during volatile periods and normalize as activity settles [2].",
+        "checks": {
+          "has_answer": true,
+          "has_sources": true,
+          "valid_citations": true,
+          "expected_document_retrieved": true
+        },
+        "passed": true
+      },
+      {
+        "question": "Can a Dynamic Position be resized without closing it?",
+        "answer": "Yes \u2014 Dynamic Positions can be resized without closing them. You can increase the length by adding bins on the lower or upper side (new allocation beyond the default 70-bin layout is capped at 91 added bins per resize instruction), or decrease the length by removing empty bins; you can also run a combined \u201crebalance\u201d flow that claims, removes, resizes, and adds liquidity in one operation [1]. \n\nNote two practical constraints in the docs: additional per-bin allocation is limited to 91 new bins per resize, and if liquidity is locked the program prevents removal until the lock releases (so some resize/removal actions may be blocked until locks clear) [1][3].",
+        "checks": {
+          "has_answer": true,
+          "has_sources": true,
+          "valid_citations": true,
+          "expected_document_retrieved": true
+        },
+        "passed": true
+      },
+      {
+        "question": "What happens to mining rewards when the active bin has no liquidity?",
+        "answer": "If the pool\u2019s active bin has no liquidity, rewards for that period are not distributed to LPs; the program instead records the elapsed \u201cempty-liquidity\u201d time (tracked as cumulativesecondswithemptyliquidity_reward) rather than assigning per-token rewards to positions [1][3]. Rewards are designed to flow only to bins supporting active trading, so empty active bins do not receive emissions [4].\n\nThe protocol provides a flow for handling those ineligible rewards: operators can withdraw ineligible reward amounts, and if a funder chooses to carry forward rewards accumulated during empty-liquidity time, that carry\u2011forward amount can be included in a subsequent funding and thus included when computing the new reward rate [1][2].",
+        "checks": {
+          "has_answer": true,
+          "has_sources": true,
+          "valid_citations": true,
+          "expected_document_retrieved": true
+        },
+        "passed": true
+      },
+      {
+        "question": "How does OnlyY fee collection work?",
+        "answer": "OnlyY means all trading fees are collected in token Y (the pool\u2019s Y/quote side). When a trader swaps Y\u2192X the fee is simply taken from the input Y (because Y is entering the pool); when a trader swaps X\u2192Y the fee is still denominated in Y and is accounted on the output side of that bin-level swap. This concentrates fee accrual on the Y token instead of splitting fees across both assets [1].\n\nThis setting is a pool-level product decision: it makes fee accounting and quote-token economics simpler (helpful for launches or when Y is a familiar quote), and it also causes limit-order fills to produce fees in Y. It does not remove market risk or change how swaps shift token balances across bins\u2014LPs and order participants still face exposure changes as price moves [2][3][5].",
+        "checks": {
+          "has_answer": true,
+          "has_sources": true,
+          "valid_citations": true,
+          "expected_document_retrieved": true
+        },
+        "passed": true
+      }
+    ],
+    "tool_cases": [
+      {
+        "question": "What is a bin step?",
+        "expected_address": null,
+        "actual": [],
+        "passed": true
+      },
+      {
+        "question": "How do dynamic fees work?",
+        "pool_address": "77777777777777777777777777777777777777777777",
+        "expected_address": null,
+        "actual": [],
+        "passed": true
+      },
+      {
+        "question": "What is the difference between a limit order and an LP position?",
+        "expected_address": null,
+        "actual": [],
+        "passed": true
+      },
+      {
+        "question": "Which Token 2022 extensions does DLMM support?",
+        "expected_address": null,
+        "actual": [],
+        "passed": true
+      },
+      {
+        "question": "What is the current TVL of pool 77777777777777777777777777777777777777777777?",
+        "expected_address": "77777777777777777777777777777777777777777777",
+        "actual": [
+          {
+            "name": "get_pool",
+            "arguments": {
+              "address": "77777777777777777777777777777777777777777777"
+            }
+          }
+        ],
+        "passed": true
+      },
+      {
+        "question": "What is the current price in pool 77777777777777777777777777777777777777777777?",
+        "expected_address": "77777777777777777777777777777777777777777777",
+        "actual": [
+          {
+            "name": "get_pool",
+            "arguments": {
+              "address": "77777777777777777777777777777777777777777777"
+            }
+          }
+        ],
+        "passed": true
+      },
+      {
+        "question": "Explain bin step and show its value for pool 77777777777777777777777777777777777777777777.",
+        "expected_address": "77777777777777777777777777777777777777777777",
+        "actual": [
+          {
+            "name": "get_pool",
+            "arguments": {
+              "address": "77777777777777777777777777777777777777777777"
+            }
+          }
+        ],
+        "passed": true
+      },
+      {
+        "question": "How do dynamic fees work and what are the current fees for pool 77777777777777777777777777777777777777777777?",
+        "expected_address": "77777777777777777777777777777777777777777777",
+        "actual": [
+          {
+            "name": "get_pool",
+            "arguments": {
+              "address": "77777777777777777777777777777777777777777777"
+            }
+          }
+        ],
+        "passed": true
+      },
+      {
+        "question": "What is this pool's current TVL?",
+        "expected_address": null,
+        "actual": [],
+        "passed": true
+      },
+      {
+        "question": "What is this pool's current TVL?",
+        "pool_address": "77777777777777777777777777777777777777777777",
+        "expected_address": "77777777777777777777777777777777777777777777",
+        "actual": [
+          {
+            "name": "get_pool",
+            "arguments": {
+              "address": "77777777777777777777777777777777777777777777"
+            }
+          }
+        ],
+        "passed": true
+      },
+      {
+        "question": "What is the current TVL of pool 88888888888888888888888888888888888888888888?",
+        "pool_address": "77777777777777777777777777777777777777777777",
+        "expected_address": "88888888888888888888888888888888888888888888",
+        "actual": [
+          {
+            "name": "get_pool",
+            "arguments": {
+              "address": "88888888888888888888888888888888888888888888"
+            }
+          }
+        ],
+        "passed": true
+      },
+      {
+        "question": "What is the current TVL of pool 8abc?",
+        "expected_address": null,
+        "actual": [],
+        "passed": true
+      }
+    ]
   }
-]
+}

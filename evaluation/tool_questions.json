@@ -1,0 +1,53 @@
+[
+  {
+    "question": "What is a bin step?",
+    "expected_address": null
+  },
+  {
+    "question": "How do dynamic fees work?",
+    "pool_address": "77777777777777777777777777777777777777777777",
+    "expected_address": null
+  },
+  {
+    "question": "What is the difference between a limit order and an LP position?",
+    "expected_address": null
+  },
+  {
+    "question": "Which Token 2022 extensions does DLMM support?",
+    "expected_address": null
+  },
+  {
+    "question": "What is the current TVL of pool 77777777777777777777777777777777777777777777?",
+    "expected_address": "77777777777777777777777777777777777777777777"
+  },
+  {
+    "question": "What is the current price in pool 77777777777777777777777777777777777777777777?",
+    "expected_address": "77777777777777777777777777777777777777777777"
+  },
+  {
+    "question": "Explain bin step and show its value for pool 77777777777777777777777777777777777777777777.",
+    "expected_address": "77777777777777777777777777777777777777777777"
+  },
+  {
+    "question": "How do dynamic fees work and what are the current fees for pool 77777777777777777777777777777777777777777777?",
+    "expected_address": "77777777777777777777777777777777777777777777"
+  },
+  {
+    "question": "What is this pool's current TVL?",
+    "expected_address": null
+  },
+  {
+    "question": "What is this pool's current TVL?",
+    "pool_address": "77777777777777777777777777777777777777777777",
+    "expected_address": "77777777777777777777777777777777777777777777"
+  },
+  {
+    "question": "What is the current TVL of pool 88888888888888888888888888888888888888888888?",
+    "pool_address": "77777777777777777777777777777777777777777777",
+    "expected_address": "88888888888888888888888888888888888888888888"
+  },
+  {
+    "question": "What is the current TVL of pool 8abc?",
+    "expected_address": null
+  }
+]

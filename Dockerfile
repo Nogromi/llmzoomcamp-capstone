@@ -9,15 +9,13 @@ ENV UV_LINK_MODE=copy
 
 COPY pyproject.toml uv.lock README.md ./
 
-RUN uv sync --locked --no-install-project
+RUN uv sync --locked --no-dev --no-install-project
 
 COPY src ./src
 COPY flows ./flows
 COPY evaluation ./evaluation
-COPY tests ./tests
-
-RUN uv sync --locked
+RUN uv sync --locked --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-CMD ["uv", "run", "streamlit", "run", "src/dlmm_position_lab/app.py", "--server.address=0.0.0.0", "--server.port=8501"]
+CMD ["streamlit", "run", "src/dlmm_position_lab/app.py", "--server.address=0.0.0.0", "--server.port=8501"]

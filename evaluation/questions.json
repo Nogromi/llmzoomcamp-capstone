@@ -1,152 +1,182 @@
 [
   {
     "question": "What does DLMM stand for and what is it?",
-    "expected_document_ids": ["50b32dedc4b9ab0e209d524b"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "50b32dedc4b9ab0e209d524b"
+    ]
   },
   {
     "question": "Why is concentrated liquidity useful compared with liquidity far from the current price?",
-    "expected_document_ids": ["d5dd50a71d799616b44c15de"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "d5dd50a71d799616b44c15de"
+    ]
   },
   {
     "question": "What information does an LbPair store?",
-    "expected_document_ids": ["37e108ec030338da0b0ab7d7"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "37e108ec030338da0b0ab7d7"
+    ]
   },
   {
     "question": "What is a bin step and how should I choose one?",
-    "expected_document_ids": ["43d50f4a6e86ef4910b6e7d5"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "43d50f4a6e86ef4910b6e7d5"
+    ]
   },
   {
     "question": "How do DLMM dynamic fees react to market conditions?",
-    "expected_document_ids": ["bafdbab0259d79061dc8b01b"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "bafdbab0259d79061dc8b01b"
+    ]
   },
   {
     "question": "What liquidity distribution shapes can an LP choose?",
-    "expected_document_ids": ["65edf9c8e3f763c23d4f8429"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "65edf9c8e3f763c23d4f8429"
+    ]
   },
   {
     "question": "Which DLMM strategy is suited to a stable or pegged pair?",
-    "expected_document_ids": ["25cedbc26f5ad9f701577e84"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "25cedbc26f5ad9f701577e84"
+    ]
   },
   {
     "question": "What does a DLMM Dynamic Position store?",
-    "expected_document_ids": ["19e94b6914be61de7251857a"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "19e94b6914be61de7251857a"
+    ]
   },
   {
     "question": "How is the bin range of a Dynamic Position represented?",
-    "expected_document_ids": ["f0db21ab09212e05632e3483"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "f0db21ab09212e05632e3483"
+    ]
   },
   {
     "question": "How do trading fees and rewards accrue to a position?",
-    "expected_document_ids": ["a37b0539d6b4f751b7a6dd81"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "a37b0539d6b4f751b7a6dd81"
+    ]
   },
   {
     "question": "What can a Dynamic Position operator do?",
-    "expected_document_ids": ["d9e1f24d4db4d717e9146778"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "d9e1f24d4db4d717e9146778"
+    ]
   },
   {
     "question": "Can a Dynamic Position range be resized without closing it?",
-    "expected_document_ids": ["00484ce4c11493a3a3b1bce9"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "00484ce4c11493a3a3b1bce9"
+    ]
   },
   {
     "question": "What shrink modes are available during a position rebalance?",
-    "expected_document_ids": ["05f602e28b3ee4e11c5673e8"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "05f602e28b3ee4e11c5673e8"
+    ]
   },
   {
     "question": "How do Dynamic Positions differ from the default position range?",
-    "expected_document_ids": ["053be22f6712c2fbf19e145d"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "053be22f6712c2fbf19e145d"
+    ]
   },
   {
     "question": "How does a DLMM limit order place tokens into bins?",
-    "expected_document_ids": ["acf124e913673288a0ce5b33"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "acf124e913673288a0ce5b33"
+    ]
   },
   {
     "question": "What is the difference between a limit order and an LP position?",
-    "expected_document_ids": ["ab8308c616c25bd1b539286d"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "ab8308c616c25bd1b539286d"
+    ]
   },
   {
     "question": "How are fees shared when a swap fills limit-order and market-maker liquidity?",
-    "expected_document_ids": ["87f20a2d448c52b0e1d11ead"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "87f20a2d448c52b0e1d11ead"
+    ]
   },
   {
     "question": "What execution risks should users consider with DLMM limit orders?",
-    "expected_document_ids": ["c70633f57d33512714c8e9e0"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "c70633f57d33512714c8e9e0"
+    ]
   },
   {
     "question": "Who earns DLMM liquidity mining rewards?",
-    "expected_document_ids": ["18899e40e824589ab6902d94"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "18899e40e824589ab6902d94"
+    ]
   },
   {
     "question": "How are liquidity mining rewards emitted over a reward period?",
-    "expected_document_ids": ["428f5adbad1e463480debdc2"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "428f5adbad1e463480debdc2"
+    ]
   },
   {
     "question": "What happens to rewards when the active bin has no liquidity?",
-    "expected_document_ids": ["be95a27213b1b1ff0d5f49e4"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "be95a27213b1b1ff0d5f49e4"
+    ]
   },
   {
     "question": "Do DLMM liquidity mining rewards auto-compound?",
-    "expected_document_ids": ["1a13ab7a0b808c4b79b4c623"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "1a13ab7a0b808c4b79b4c623"
+    ]
   },
   {
     "question": "Which collect fee modes does DLMM support?",
-    "expected_document_ids": ["19f59c1731f3a8a3e2cd5e01"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "19f59c1731f3a8a3e2cd5e01"
+    ]
   },
   {
     "question": "How does InputOnly fee collection work?",
-    "expected_document_ids": ["47e8f10895a3f8922736af67"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "47e8f10895a3f8922736af67"
+    ]
   },
   {
     "question": "How does OnlyY fee collection work?",
-    "expected_document_ids": ["a5a3e12f0122e406c5940232"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "a5a3e12f0122e406c5940232"
+    ]
   },
   {
     "question": "Which Token 2022 extensions can be used permissionlessly in DLMM?",
-    "expected_document_ids": ["38cee60423016c32f698b41c"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "38cee60423016c32f698b41c"
+    ]
   },
   {
     "question": "When does a Token 2022 mint require token badge review?",
-    "expected_document_ids": ["6d46d5e907cd896903e1c00a"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "6d46d5e907cd896903e1c00a"
+    ]
   },
   {
     "question": "What is the formula for a DLMM bin price?",
-    "expected_document_ids": ["4a05349ebebbc7810f89fb88"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "4a05349ebebbc7810f89fb88"
+    ]
   },
   {
     "question": "How is the total DLMM trading fee calculated?",
-    "expected_document_ids": ["5790a8a3ba0401d914cc8f96"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "5790a8a3ba0401d914cc8f96"
+    ]
   },
   {
     "question": "How does the DLMM price impact guard calculate a guard price?",
-    "expected_document_ids": ["d24c5678ab275b72893eabde"],
-    "category": "documentation"
+    "expected_document_ids": [
+      "d24c5678ab275b72893eabde"
+    ]
   }
 ]
