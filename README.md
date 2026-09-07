@@ -132,7 +132,23 @@ Results are written to `evaluation/results.json`. RAG checks cover a nonempty an
 
 Tool checks verify whether the model requests `get_pool` and supplies the expected address, including missing addresses and sidebar overrides. Their addresses are synthetic; these selection checks do not execute Meteora API requests. See [saved results](evaluation/results.json). These are small evaluation sets, and model output can vary between runs.
 
-Saved evaluation: hybrid Hit Rate@5 **1.00**, MRR **0.783**, RAG checks **5/5**, native tool-selection checks **12/12**.
+## Offline Evaluation Results
+
+Retrieval benchmark on **30 questions**, with **k = 5**, from [evaluation/results.json](evaluation/results.json).
+
+| Retrieval strategy | Hit Rate@5 | MRR@5 | Description |
+| --- | ---: | ---: | --- |
+| BM25 (keyword search) | 0.8667 | 0.5889 | Finds an expected chunk for 26 of 30 questions. |
+| Vector search | 1.0000 | 0.8844 | Finds an expected chunk for every question and has the highest MRR. |
+| Hybrid (vector + BM25) | 1.0000 | 0.7833 | Combines both rankings using RRF; matches vector's hit rate with lower MRR. |
+
+**Metrics:** Hit Rate@5 is the fraction of questions with an expected chunk in the first five results. MRR@5 averages the reciprocal rank of the first expected chunk, with zero for a miss. Higher values are better for both metrics.
+
+**Benchmark conclusion:** Vector search ranks the first expected chunk higher on average than hybrid on this dataset. Both achieve a perfect hit rate on these 30 questions.
+
+**Product decision:** Retrieval is an internal app default to keep the chat UI simple. The current default is hybrid; the saved benchmark favors vector search on ranking quality.
+
+The same saved run passed **5/5 RAG checks** and **12/12 native tool-selection checks**. These small datasets support the demo; broader evaluation is needed before generalizing the results.
 
 ## Files
 
