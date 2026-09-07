@@ -92,7 +92,7 @@ Ask **“What is a bin step?”** to get an explanation with numbered citations.
 
 ### Live pool information
 
-Ask **“What is the current TVL of pool YOUR_POOL_ADDRESS?”**, replacing `YOUR_POOL_ADDRESS` with a Meteora DLMM pool address. The response includes pool metrics. The expanded **Function call** panel shows the model's `get_pool` request, address argument, and API result.
+Ask **“What is the current TVL of pool YOUR_POOL_ADDRESS?”**, replacing `YOUR_POOL_ADDRESS` with a Meteora DLMM pool address( for example:  https://app.meteora.ag/dlmm/HTvjzsfX3yU6BUodCjZ5vZkUrAxMDTrBs3CJaq43ashR or just HTvjzsfX3yU6BUodCjZ5vZkUrAxMDTrBs3CJaq43ashR). The response includes pool metrics. The expanded **Function call** panel shows the model's `get_pool` request, address argument, and API result.
 
 ![Current pool information from Meteora](docs/images/pool.png)
 
