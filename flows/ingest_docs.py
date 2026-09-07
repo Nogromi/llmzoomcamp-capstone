@@ -8,6 +8,8 @@ from pathlib import Path
 
 import httpx
 from elasticsearch.helpers import bulk
+from prefect import flow, task
+from prefect.cache_policies import NO_CACHE
 
 from dlmm_position_lab.retrieval import (
     EMBEDDING_DIMENSIONS,
@@ -92,7 +94,8 @@ def parse_document(markdown: str, url: str) -> list[dict]:
     return chunks
 
 
-def ingest_meteora_docs() -> None:
+@task(retries=2, retry_delay_seconds=10, cache_policy=NO_CACHE)
+def download_documents() -> list[dict]:
     with httpx.Client(timeout=30, follow_redirects=True) as http:
         response = http.get(DOCS_INDEX)
         response.raise_for_status()
@@ -111,13 +114,25 @@ def ingest_meteora_docs() -> None:
             response = http.get(url if url.endswith(".md") else f"{url}.md")
             response.raise_for_status()
             chunks.extend(parse_document(response.text, url))
+    print(f"Downloaded {len(chunks)} chunks from {len(urls)} pages.")
+    return chunks
 
-    # Finish downloads and embeddings before replacing the existing index.
+
+@task(retries=2, retry_delay_seconds=10, cache_policy=NO_CACHE)
+def embed_documents(chunks: list[dict]) -> list[list[float]]:
     vectors = embed_texts(
         [f"{c['title']}\n{c['section']}\n{c['text']}" for c in chunks]
     )
     if len(vectors) != len(chunks):
         raise RuntimeError("The number of embeddings does not match the chunks.")
+    return vectors
+
+
+@task(retries=0, cache_policy=NO_CACHE)
+def index_documents(chunks: list[dict], vectors: list[list[float]]) -> None:
+    # Validate before deleting the existing index; don't retry destructive rebuilds.
+    if not chunks or len(vectors) != len(chunks):
+        raise ValueError("Indexing requires nonempty chunks and matching embeddings.")
     with create_client() as client:
         client.indices.delete(index=INDEX_NAME, ignore_unavailable=True)
         client.indices.create(
@@ -151,13 +166,26 @@ def ingest_meteora_docs() -> None:
             ],
             refresh="wait_for",
         )
+
+
+@task(cache_policy=NO_CACHE)
+def save_snapshot(chunks: list[dict]) -> None:
     # Save an inspectable snapshot; chat retrieves from Elasticsearch, not this file.
     output = Path("data/documents.json")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
         json.dumps(chunks, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
-    print(f"Indexed {len(chunks)} chunks from {len(urls)} pages. Saved {output}.")
+    print(f"Saved {len(chunks)} chunks to {output}.")
+
+
+@flow(name="ingest-meteora-docs", log_prints=True, retries=0)
+def ingest_meteora_docs() -> None:
+    """Run download, embedding, index rebuild, and snapshot tasks in order."""
+    chunks = download_documents()
+    vectors = embed_documents(chunks)
+    index_documents(chunks, vectors)
+    save_snapshot(chunks)
 
 
 if __name__ == "__main__":

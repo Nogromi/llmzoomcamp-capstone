@@ -2,13 +2,13 @@
 
 An educational application for learning how Meteora DLMM pools work. Get answers grounded in official documentation and look up current pool data. Built as a course project for [LLM Zoomcamp](https://github.com/DataTalksClub/llm-zoomcamp).
 
-Built with Python, Streamlit, Elasticsearch, OpenAI, and SQLite. Pool access is read-only; the app gives educational explanations, not investment recommendations.
+Built with Python, Prefect, Streamlit, Elasticsearch, OpenAI, and SQLite. Pool access is read-only; the app gives educational explanations, not investment recommendations.
 
 ## System Architecture & Workflow
 
 ```mermaid
 flowchart TD
-    subgraph Indexing[Ingestion: flows/ingest_docs.py]
+    subgraph Indexing[Prefect ingestion flow: flows/ingest_docs.py]
         Docs[Meteora llms.txt and DLMM Markdown] --> Chunks[Clean and chunk pages]
         Chunks --> Embed[OpenAI document embeddings]
         Embed --> ES[(Elasticsearch: chunks and vectors)]
@@ -44,6 +44,10 @@ flowchart TD
 
 Ingestion splits pages by heading into roughly 900-character chunks with 20 words of overlap. It embeds the chunks, rebuilds the Elasticsearch index, and saves a local JSON snapshot. Chat searches Elasticsearch; it does not read the snapshot.
 
+Ingestion runs as the Prefect flow `ingest-meteora-docs`, with separate download, embedding, indexing, and snapshot tasks. Download and embedding tasks retry twice with a 10-second delay. Tasks run sequentially with caching disabled so each run refreshes the documentation. Indexing begins only after downloads and embeddings succeed; the destructive index rebuild is not automatically retried. Prefect records task states and captures progress logs using its [flow and task orchestration](https://docs.prefect.io/v3/concepts/tasks).
+
+The commands below launch a single flow run using Prefect's temporary local server; no Prefect Cloud account or separate server is required. This does not configure a recurring schedule.
+
 Every question first retrieves documentation, including questions about live pools. Python combines the top 10 keyword and vector results using Reciprocal Rank Fusion and sends up to five chunks to the model. A documentation answer uses one LLM call. If the model requests `get_pool(address="…")`, Python validates the request, looks up the pool, and sends the data or error back as `function_call_output` with the matching call ID. A second LLM call writes the answer with further tool calls disabled.
 
 The app logs requests, latency, LLM token counts, and tool traces in SQLite before displaying successful responses. Request exceptions are logged and shown as errors. Feedback is saved separately; the Monitoring page reads both tables. Evaluation runs separately from chat, as described below.
@@ -78,7 +82,7 @@ Requires Python 3.12+ and `uv`. Create `.env` as above, using `ELASTICSEARCH_URL
 ```bash
 uv sync --locked
 docker compose up -d --wait elasticsearch
-uv run python flows/ingest_docs.py
+uv run --env-file .env python flows/ingest_docs.py
 uv run streamlit run src/dlmm_position_lab/app.py
 ```
 
@@ -106,7 +110,7 @@ Ask **“Explain bin steps and show the bin step for pool YOUR_POOL_ADDRESS.”*
 
 ### Monitoring and tool execution
 
-Rate an answer, then open **Monitoring** to see request counts, latency, feedback, and errors. In the request table, `tools_called` lists `get_pool`; `tool_calls` records its call ID, arguments, result, and success or error status.
+Rate an answer, then open **Monitoring** to see summary metrics and five charts: requests per day, response latency, positive/negative feedback, errors per day, and daily input/output token usage. Daily totals use UTC; latency includes successful requests only, and token totals exclude embeddings. In the request table, `tools_called` lists `get_pool`; `tool_calls` records its call ID, arguments, result, and success or error status.
 
 ![Monitoring metrics and recorded get_pool execution](docs/images/monitoring.png)
 
@@ -153,7 +157,7 @@ The same saved run passed **5/5 RAG checks** and **12/12 native tool-selection c
 ## Files
 
 ```text
-flows/ingest_docs.py                   Download, chunk, embed, and index
+flows/ingest_docs.py                   Prefect flow: download, chunk, embed, index, snapshot
 src/dlmm_position_lab/
     app.py                            Documentation chat and pool lookup UI
     retrieval.py                      Embeddings, BM25, vector search, RRF
