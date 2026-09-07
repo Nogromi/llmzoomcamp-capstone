@@ -22,6 +22,7 @@ def evaluate_retrieval() -> list[dict]:
     scores = {name: [] for name in ("bm25", "vector", "hybrid")}
     for case in questions:
         print(case["question"])
+        # Reuse both candidate lists so hybrid matches the app without another search.
         bm25 = search(case["question"], "bm25", 10)
         vector = search(case["question"], "vector", 10)
         rankings = {
@@ -38,6 +39,7 @@ def evaluate_retrieval() -> list[dict]:
                 ),
                 0,
             )
+            # Reciprocal rank is zero for a miss; its mean gives MRR at this cutoff.
             scores[name].append(1 / rank if rank else 0)
     return [
         {
@@ -58,6 +60,7 @@ def evaluate_quality() -> dict:
         citations = [
             int(number) for number in re.findall(r"\[(\d+)\]", response["answer"])
         ]
+        # These check citation structure and retrieval, not factual correctness.
         checks = {
             "has_answer": bool(response["answer"].strip()),
             "has_sources": bool(response["sources"]),
@@ -80,6 +83,7 @@ def evaluate_quality() -> dict:
     with OpenAI() as client:
         for case in load_cases("tool_questions.json"):
             print(f"Tool selection: {case['question']}")
+            # Test tool selection with synthetic addresses; never execute the lookup.
             response = start_answer(
                 client, case["question"], [], case.get("pool_address", "")
             )

@@ -27,6 +27,7 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
                 input=texts[start : start + 64],
                 encoding_format="float",
             )
+            # Keep vectors aligned with their input texts when building the index.
             vectors.extend(
                 item.embedding for item in sorted(response.data, key=lambda x: x.index)
             )
@@ -35,6 +36,7 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
 
 def fuse_results(rankings: list[list[dict]], limit: int = 5) -> list[dict]:
     """Reciprocal Rank Fusion: each rank contributes 1 / (60 + rank)."""
+    # Combine ranks because keyword and vector scores use different scales.
     scores, documents = {}, {}
     for ranking in rankings:
         for rank, document in enumerate(ranking, 1):
@@ -50,6 +52,7 @@ def search(query: str, mode: str = "hybrid", limit: int = 5) -> list[dict]:
         raise ValueError("Enter a question and a positive result limit.")
     if mode not in {"bm25", "vector", "hybrid"}:
         raise ValueError("Search mode must be bm25, vector, or hybrid.")
+    # Fetch extra candidates before fusion narrows them to the requested result count.
     size = max(10, limit) if mode == "hybrid" else limit
     rankings = []
     with create_client() as client:
@@ -58,6 +61,7 @@ def search(query: str, mode: str = "hybrid", limit: int = 5) -> list[dict]:
                 "Run flows/ingest_docs.py to build the documentation index."
             )
         if mode in {"bm25", "hybrid"}:
+            # Give headings and exact phrases more weight than ordinary body matches.
             response = client.search(
                 index=INDEX_NAME,
                 size=size,
@@ -80,6 +84,7 @@ def search(query: str, mode: str = "hybrid", limit: int = 5) -> list[dict]:
             )
             rankings.append([hit["_source"] for hit in response["hits"]["hits"]])
         if mode in {"vector", "hybrid"}:
+            # Query embeddings must use the same model and dimensions as the index.
             response = client.search(
                 index=INDEX_NAME,
                 size=size,

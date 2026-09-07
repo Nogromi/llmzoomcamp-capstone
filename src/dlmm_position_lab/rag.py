@@ -67,6 +67,7 @@ def start_answer(
     client: OpenAI, question: str, sources: list[dict], pool_address: str = ""
 ):
     """Let the model answer directly or request get_pool with its own arguments."""
+    # Use the same source numbering as the links displayed by the chat UI.
     context = "\n\n".join(
         f"[{i}] {doc['title']} — {doc['section']}\n{doc['url']}\n{doc['text']}"
         for i, doc in enumerate(sources, 1)
@@ -86,6 +87,7 @@ def answer_question(question: str, pool_address: str = "") -> dict:
     if not question:
         raise ValueError("Enter a question.")
     started = perf_counter()
+    # Retrieve context even for pool questions, which can also need an explanation.
     sources = search(question)
     pool, notice, tool_calls = None, "", []
     with OpenAI() as client:
@@ -108,6 +110,8 @@ def answer_question(question: str, pool_address: str = "") -> dict:
                 address = arguments["address"]
                 if not isinstance(address, str) or not address:
                     raise ValueError("The pool address must be a nonempty string.")
+                # Enforce user-supplied addresses in Python, with the question taking
+                # priority over the sidebar default regardless of the model's choice.
                 allowed_addresses = re.findall(
                     r"\b[1-9A-HJ-NP-Za-km-z]{32,44}\b", question
                 ) or [pool_address]
@@ -118,6 +122,7 @@ def answer_question(question: str, pool_address: str = "") -> dict:
                 pool = get_pool(address)
                 result = pool
             except (httpx.HTTPError, ValueError, KeyError, TypeError) as error:
+                # Return lookup failures to the model so it can explain missing data.
                 notice = f"Pool lookup failed: {error}"
                 result = {"error": notice}
             tool_calls.append(
@@ -129,6 +134,8 @@ def answer_question(question: str, pool_address: str = "") -> dict:
                     "result": result,
                 }
             )
+            # Continue the first response and pair the result with its function call.
+            # Disabling tools here limits each question to one pool lookup.
             response = client.responses.create(
                 model=CHAT_MODEL,
                 instructions=ANSWER_PROMPT,

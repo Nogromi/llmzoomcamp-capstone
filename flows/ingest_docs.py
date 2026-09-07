@@ -21,6 +21,7 @@ DLMM_PREFIX = "https://docs.meteora.ag/core-products/dlmm/"
 
 
 def clean_text(text: str) -> str:
+    # Remove page markup and styling while keeping link labels as searchable text.
     text = re.sub(r"!\[[^]]*\]\([^)]+\)", "", text)
     text = re.sub(r"\[([^]]+)\]\([^)]+\)", r"\1", text)
     text = re.sub(r"<[^>]+>", " ", text)
@@ -45,11 +46,13 @@ def split_text(text: str) -> list[str]:
         chunks.append(" ".join(words[start:end]))
         if end == len(words):
             break
+        # Keep context across chunk boundaries, but always advance past a word.
         start = max(start + 1, end - 20)
     return chunks
 
 
 def parse_document(markdown: str, url: str) -> list[dict]:
+    # Strip YAML metadata before interpreting Markdown headings.
     markdown = re.sub(
         r"\A---\s*\n.*?\n---\s*\n", "", markdown, count=1, flags=re.DOTALL
     )
@@ -58,6 +61,7 @@ def parse_document(markdown: str, url: str) -> list[dict]:
     title = clean_text(title.group(1)) if title else source_url
     parts = re.split(r"^#{1,6}\s+(.+?)\s*#*\s*$", markdown, flags=re.MULTILINE)
     sections = []
+    # The captured headings alternate with their bodies in re.split's output.
     for heading, body in zip(parts[1::2], parts[2::2]):
         text = clean_text(body)
         if text and text.casefold().rstrip(".! ") not in {
@@ -74,6 +78,7 @@ def parse_document(markdown: str, url: str) -> list[dict]:
     chunks = []
     for section_number, (section, text) in enumerate(sections):
         for chunk_number, chunk in enumerate(split_text(text)):
+            # Evaluation labels use these IDs; section or chunk shifts can change them.
             location = f"{source_url}\n{section_number}\n{section}\n{chunk_number}"
             chunks.append(
                 {
@@ -107,6 +112,7 @@ def ingest_meteora_docs() -> None:
             response.raise_for_status()
             chunks.extend(parse_document(response.text, url))
 
+    # Finish downloads and embeddings before replacing the existing index.
     vectors = embed_texts(
         [f"{c['title']}\n{c['section']}\n{c['text']}" for c in chunks]
     )
@@ -145,6 +151,7 @@ def ingest_meteora_docs() -> None:
             ],
             refresh="wait_for",
         )
+    # Save an inspectable snapshot; chat retrieves from Elasticsearch, not this file.
     output = Path("data/documents.json")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
