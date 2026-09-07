@@ -1,0 +1,576 @@
+{
+  "rag_metrics": {
+    "questions": 5,
+    "pass_rate": 1.0,
+    "answer_rate": 1.0,
+    "source_rate": 1.0,
+    "citation_rate": 1.0,
+    "expected_document_rate": 1.0
+  },
+  "rag_cases": [
+    {
+      "question": "What is a bin step and how does its size affect a pool?",
+      "answer": {
+        "answer": "- What a bin step is: the bin step is the configured percentage difference between adjacent price bins in a DLMM pool, measured in basis points. It defines how prices progress from bin to bin (Pi = (1 + bin step/10,000)^i) \u2014 e.g., 25 bps \u2248 0.25% steps, so a $20 asset would have next bins near $20.05, $20.10, etc. [2][3]\n\n- How its size affects a pool:\n  - Granularity: a smaller bin step creates tighter price intervals (like a finer tick size), letting liquidity capture more continuous/trade-by-trade activity; this is generally better for stable, highly liquid pairs. A larger bin step creates wider jumps between bins, so a position can cover a wider price range with fewer bins \u2014 often better for more volatile pairs. [3][4]\n  - Fees and market design: bin step is an input to the pool\u2019s base fee calculation; smaller steps are usually paired with tighter, more active markets while larger steps pair with wider, more volatile markets. DLMM also uses per-bin fee accounting (bins crossed by a swap earn fees), and supports dynamic fees that rise with volatility, so both baseline fee (linked to bin step) and expected volatility matter when choosing a step. [1][5]",
+        "sources": [
+          {
+            "document_id": "dfce581552f43f4647ccd967",
+            "title": "DLMM Strategies and Use Cases",
+            "section": "How Bin Step Affects Fees",
+            "url": "https://docs.meteora.ag/core-products/dlmm/strategies-and-use-cases"
+          },
+          {
+            "document_id": "4a05349ebebbc7810f89fb88",
+            "title": "DLMM Formulas",
+            "section": "Bin Price",
+            "url": "https://docs.meteora.ag/core-products/dlmm/formulas"
+          },
+          {
+            "document_id": "43d50f4a6e86ef4910b6e7d5",
+            "title": "DLMM Strategies and Use Cases",
+            "section": "Choosing Your Bin Step",
+            "url": "https://docs.meteora.ag/core-products/dlmm/strategies-and-use-cases"
+          },
+          {
+            "document_id": "19e94b6914be61de7251857a",
+            "title": "DLMM Dynamic Positions",
+            "section": "What A Dynamic Position Stores",
+            "url": "https://docs.meteora.ag/core-products/dlmm/dynamic-positions"
+          },
+          {
+            "document_id": "13ec0d3c8220090e9ee11cd6",
+            "title": "DLMM Collect Fee Mode",
+            "section": "How Fees Flow During A Swap",
+            "url": "https://docs.meteora.ag/core-products/dlmm/collect-fee-mode"
+          }
+        ],
+        "retrieved_document_ids": [
+          "dfce581552f43f4647ccd967",
+          "4a05349ebebbc7810f89fb88",
+          "43d50f4a6e86ef4910b6e7d5",
+          "19e94b6914be61de7251857a",
+          "13ec0d3c8220090e9ee11cd6"
+        ],
+        "latency_ms": 10212.900779000165,
+        "input_tokens": 871,
+        "output_tokens": 856
+      },
+      "validation": {
+        "has_answer": true,
+        "has_sources": true,
+        "has_inline_citation": true,
+        "expected_document_retrieved": true
+      }
+    },
+    {
+      "question": "How do DLMM dynamic fees respond to volatility?",
+      "answer": {
+        "answer": "DLMM charges a fixed base fee plus a variable fee that adjusts to market volatility. DLMM treats volatility as higher when swaps cross more bins or occur in quick succession, and the variable fee can rise during those periods so LPs capture more value when taking greater risk. When activity slows, the volatility measurement decays and fees can return to normal. The base fee itself depends partly on bin step (smaller bin steps \u2192 tighter markets, larger steps \u2192 wider/ more volatile markets), while dynamic fees let the total fee increase during volatile episodes [1][2].",
+        "sources": [
+          {
+            "document_id": "bafdbab0259d79061dc8b01b",
+            "title": "What is DLMM?",
+            "section": "Dynamic Fees",
+            "url": "https://docs.meteora.ag/core-products/dlmm/what-is-dlmm"
+          },
+          {
+            "document_id": "dfce581552f43f4647ccd967",
+            "title": "DLMM Strategies and Use Cases",
+            "section": "How Bin Step Affects Fees",
+            "url": "https://docs.meteora.ag/core-products/dlmm/strategies-and-use-cases"
+          },
+          {
+            "document_id": "a37b0539d6b4f751b7a6dd81",
+            "title": "DLMM Dynamic Positions",
+            "section": "Fees, Rewards, and Claims",
+            "url": "https://docs.meteora.ag/core-products/dlmm/dynamic-positions"
+          },
+          {
+            "document_id": "e5e21877afeafcfb89a8d2bd",
+            "title": "What is DLMM?",
+            "section": "How DLMM Works",
+            "url": "https://docs.meteora.ag/core-products/dlmm/what-is-dlmm"
+          },
+          {
+            "document_id": "43c78de04ee6e3033cdabad6",
+            "title": "DLMM Dynamic Positions",
+            "section": "When To Use Dynamic Positions",
+            "url": "https://docs.meteora.ag/core-products/dlmm/dynamic-positions"
+          }
+        ],
+        "retrieved_document_ids": [
+          "bafdbab0259d79061dc8b01b",
+          "dfce581552f43f4647ccd967",
+          "a37b0539d6b4f751b7a6dd81",
+          "e5e21877afeafcfb89a8d2bd",
+          "43c78de04ee6e3033cdabad6"
+        ],
+        "latency_ms": 5441.685644000017,
+        "input_tokens": 843,
+        "output_tokens": 388
+      },
+      "validation": {
+        "has_answer": true,
+        "has_sources": true,
+        "has_inline_citation": true,
+        "expected_document_retrieved": true
+      }
+    },
+    {
+      "question": "Can a Dynamic Position be resized without closing it?",
+      "answer": {
+        "answer": "Yes \u2014 Dynamic Positions can be resized without closing first. You can increase length (add bins), decrease length (remove empty bins), or perform a rebalance that combines claim/remove/resize/add-liquidity in one flow. New allocation when increasing is limited to 91 added bins per resize instruction [1]. Additional allocation limits are noted in the Dynamic vs Default Range comparison (91 new bins per resize) [2].",
+        "sources": [
+          {
+            "document_id": "00484ce4c11493a3a3b1bce9",
+            "title": "DLMM Dynamic Positions",
+            "section": "Resizing The Range",
+            "url": "https://docs.meteora.ag/core-products/dlmm/dynamic-positions"
+          },
+          {
+            "document_id": "053be22f6712c2fbf19e145d",
+            "title": "DLMM Dynamic Positions",
+            "section": "Dynamic Positions vs Default Position Range",
+            "url": "https://docs.meteora.ag/core-products/dlmm/dynamic-positions"
+          },
+          {
+            "document_id": "20ebc85d8ecf702e7066d4e1",
+            "title": "DLMM Dynamic Positions",
+            "section": "Adding, Removing, and Closing",
+            "url": "https://docs.meteora.ag/core-products/dlmm/dynamic-positions"
+          },
+          {
+            "document_id": "f0db21ab09212e05632e3483",
+            "title": "DLMM Dynamic Positions",
+            "section": "Position Range",
+            "url": "https://docs.meteora.ag/core-products/dlmm/dynamic-positions"
+          },
+          {
+            "document_id": "19e94b6914be61de7251857a",
+            "title": "DLMM Dynamic Positions",
+            "section": "What A Dynamic Position Stores",
+            "url": "https://docs.meteora.ag/core-products/dlmm/dynamic-positions"
+          }
+        ],
+        "retrieved_document_ids": [
+          "00484ce4c11493a3a3b1bce9",
+          "053be22f6712c2fbf19e145d",
+          "20ebc85d8ecf702e7066d4e1",
+          "f0db21ab09212e05632e3483",
+          "19e94b6914be61de7251857a"
+        ],
+        "latency_ms": 6033.021355999836,
+        "input_tokens": 824,
+        "output_tokens": 407
+      },
+      "validation": {
+        "has_answer": true,
+        "has_sources": true,
+        "has_inline_citation": true,
+        "expected_document_retrieved": true
+      }
+    },
+    {
+      "question": "What happens to mining rewards when the active bin has no liquidity?",
+      "answer": {
+        "answer": "If the active bin has no liquidity, rewards are not distributed to LPs for that period; instead the program records the elapsed empty\u2011liquidity time (tracked as cumulative seconds-with-empty-liquidity) rather than assigning rewards to LPs [1][3]. Operators can withdraw those ineligible rewards via the program flow for that case, and if a funder later tops up rewards they may choose to carry forward the ineligible (empty\u2011liquidity) amount into the new funded amount used to compute the reward rate [1][2]. During swaps, accumulated rewards can still be split to other crossed bins that do have liquidity (subject to the program\u2019s reward\u2011bin split limit) [3].",
+        "sources": [
+          {
+            "document_id": "be95a27213b1b1ff0d5f49e4",
+            "title": "DLMM Liquidity Mining",
+            "section": "What Happens When There Is No Active Liquidity",
+            "url": "https://docs.meteora.ag/core-products/dlmm/liquidity-mining"
+          },
+          {
+            "document_id": "dd20014bd6e8ff026e42bcca",
+            "title": "DLMM Formulas",
+            "section": "Liquidity Mining Rewards",
+            "url": "https://docs.meteora.ag/core-products/dlmm/formulas"
+          },
+          {
+            "document_id": "f89a423c762aa70f0e0a3a44",
+            "title": "DLMM Formulas",
+            "section": "Liquidity Mining Rewards",
+            "url": "https://docs.meteora.ag/core-products/dlmm/formulas"
+          },
+          {
+            "document_id": "b0cb5708a1fadd21ed332b23",
+            "title": "DLMM Liquidity Mining",
+            "section": "Why Liquidity Mining Matters",
+            "url": "https://docs.meteora.ag/core-products/dlmm/liquidity-mining"
+          },
+          {
+            "document_id": "ef9d9c498f9a8d01401e9933",
+            "title": "DLMM Liquidity Mining",
+            "section": "DLMM Liquidity Mining",
+            "url": "https://docs.meteora.ag/core-products/dlmm/liquidity-mining"
+          }
+        ],
+        "retrieved_document_ids": [
+          "be95a27213b1b1ff0d5f49e4",
+          "dd20014bd6e8ff026e42bcca",
+          "f89a423c762aa70f0e0a3a44",
+          "b0cb5708a1fadd21ed332b23",
+          "ef9d9c498f9a8d01401e9933"
+        ],
+        "latency_ms": 7811.538259999907,
+        "input_tokens": 909,
+        "output_tokens": 575
+      },
+      "validation": {
+        "has_answer": true,
+        "has_sources": true,
+        "has_inline_citation": true,
+        "expected_document_retrieved": true
+      }
+    },
+    {
+      "question": "How does OnlyY fee collection work?",
+      "answer": {
+        "answer": "OnlyY is a pool-level fee mode that always denominates and accumulates trading fees in token Y (the quote-side token) rather than splitting fees by trade direction [2]. Concretely: when a trader swaps Y \u2192 X the fee is taken from the input (token Y), and when a trader swaps X \u2192 Y the fee is still denominated in Y and therefore accounted from the output side of that bin-level swap [1]. This makes fee accounting concentrate on the quote asset (e.g., SOL or USDC), which can simplify bookkeeping and emphasize quote-token fee capture\u2014useful for launches or pools paired against a familiar quote token [1][3]. Limit orders that earn fees on fills also receive those fees in token Y under OnlyY [5]. Collect Fee Mode is a product decision that shapes how fees accrue to LPs and order participants; if you prefer fees to follow trade direction and accrue in both assets over time, InputOnly is often the more balanced default [2][3].",
+        "sources": [
+          {
+            "document_id": "a5a3e12f0122e406c5940232",
+            "title": "DLMM Collect Fee Mode",
+            "section": "OnlyY",
+            "url": "https://docs.meteora.ag/core-products/dlmm/collect-fee-mode"
+          },
+          {
+            "document_id": "6fd067b6fff044692771d654",
+            "title": "DLMM Collect Fee Mode",
+            "section": "DLMM Collect Fee Mode",
+            "url": "https://docs.meteora.ag/core-products/dlmm/collect-fee-mode"
+          },
+          {
+            "document_id": "859284cf518cb2a502e35561",
+            "title": "DLMM Collect Fee Mode",
+            "section": "Why Pool Creators Should Care",
+            "url": "https://docs.meteora.ag/core-products/dlmm/collect-fee-mode"
+          },
+          {
+            "document_id": "37e108ec030338da0b0ab7d7",
+            "title": "What is DLMM?",
+            "section": "How DLMM Works",
+            "url": "https://docs.meteora.ag/core-products/dlmm/what-is-dlmm"
+          },
+          {
+            "document_id": "4b32c1d8ff46dc2b23cc4295",
+            "title": "DLMM Collect Fee Mode",
+            "section": "Interaction With Limit Orders",
+            "url": "https://docs.meteora.ag/core-products/dlmm/collect-fee-mode"
+          }
+        ],
+        "retrieved_document_ids": [
+          "a5a3e12f0122e406c5940232",
+          "6fd067b6fff044692771d654",
+          "859284cf518cb2a502e35561",
+          "37e108ec030338da0b0ab7d7",
+          "4b32c1d8ff46dc2b23cc4295"
+        ],
+        "latency_ms": 7442.216171000155,
+        "input_tokens": 950,
+        "output_tokens": 530
+      },
+      "validation": {
+        "has_answer": true,
+        "has_sources": true,
+        "has_inline_citation": true,
+        "expected_document_retrieved": true
+      }
+    }
+  ],
+  "router_metrics": {
+    "questions": 12,
+    "classification_accuracy": 1.0,
+    "rag_selection_accuracy": 1.0,
+    "tool_selection_accuracy": 1.0,
+    "unnecessary_tool_call_rate": 0.0,
+    "failure_rate": 0.0
+  },
+  "router_cases": [
+    {
+      "case": {
+        "question": "What is a bin step?",
+        "expected_question_type": "documentation",
+        "expected_use_rag": true,
+        "expected_tools": []
+      },
+      "actual": {
+        "question": "What is a bin step?",
+        "decision": {
+          "question_type": "documentation",
+          "use_rag": true,
+          "tools": [],
+          "explanation": "The user is asking for an explanation of a DLMM concept, so the documentation route should be used."
+        },
+        "latency_ms": 3653.1363690000944,
+        "input_tokens": 319,
+        "output_tokens": 229
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "question": "How do dynamic fees work?",
+        "expected_question_type": "documentation",
+        "expected_use_rag": true,
+        "expected_tools": []
+      },
+      "actual": {
+        "question": "How do dynamic fees work?",
+        "decision": {
+          "question_type": "documentation",
+          "use_rag": true,
+          "tools": [],
+          "explanation": "The user is requesting an explanation of how dynamic fees work, which requires documentation/explanatory content."
+        },
+        "latency_ms": 2966.1005359998853,
+        "input_tokens": 319,
+        "output_tokens": 212
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "question": "What is the difference between a limit order and an LP position?",
+        "expected_question_type": "documentation",
+        "expected_use_rag": true,
+        "expected_tools": []
+      },
+      "actual": {
+        "question": "What is the difference between a limit order and an LP position?",
+        "decision": {
+          "question_type": "documentation",
+          "use_rag": true,
+          "tools": [],
+          "explanation": "The user is asking for an explanatory comparison of core concepts (limit order vs LP position), so documentation is required."
+        },
+        "latency_ms": 3442.96327699999,
+        "input_tokens": 326,
+        "output_tokens": 270
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "question": "Which Token 2022 extensions does DLMM support?",
+        "expected_question_type": "documentation",
+        "expected_use_rag": true,
+        "expected_tools": []
+      },
+      "actual": {
+        "question": "Which Token 2022 extensions does DLMM support?",
+        "decision": {
+          "question_type": "documentation",
+          "use_rag": true,
+          "tools": [],
+          "explanation": "This is a documentation request asking which Token 2022 extensions DLMM supports, so it requires an explanatory reference."
+        },
+        "latency_ms": 3584.7250689998873,
+        "input_tokens": 324,
+        "output_tokens": 287
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "question": "What is the current TVL of pool 8abc?",
+        "expected_question_type": "pool_data",
+        "expected_use_rag": false,
+        "expected_tools": [
+          "get_pool"
+        ]
+      },
+      "actual": {
+        "question": "What is the current TVL of pool 8abc?",
+        "decision": {
+          "question_type": "pool_data",
+          "use_rag": false,
+          "tools": [
+            "get_pool"
+          ],
+          "explanation": "The user is asking for the current TVL of a specific pool, which requires fetching up-to-date pool data."
+        },
+        "latency_ms": 2974.2507729999943,
+        "input_tokens": 325,
+        "output_tokens": 232
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "question": "Show the current active bin for pool 8abc.",
+        "expected_question_type": "pool_data",
+        "expected_use_rag": false,
+        "expected_tools": [
+          "get_pool"
+        ]
+      },
+      "actual": {
+        "question": "Show the current active bin for pool 8abc.",
+        "decision": {
+          "question_type": "pool_data",
+          "use_rag": false,
+          "tools": [
+            "get_pool"
+          ],
+          "explanation": "This request requires current information about a specific pool (pool 8abc)."
+        },
+        "latency_ms": 3172.93077599993,
+        "input_tokens": 324,
+        "output_tokens": 211
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "question": "Give me the current state of pool 8abc.",
+        "expected_question_type": "pool_data",
+        "expected_use_rag": false,
+        "expected_tools": [
+          "get_pool"
+        ]
+      },
+      "actual": {
+        "question": "Give me the current state of pool 8abc.",
+        "decision": {
+          "question_type": "pool_data",
+          "use_rag": false,
+          "tools": [
+            "get_pool"
+          ],
+          "explanation": "The user asked for the current state of a specific pool, which requires fetching live pool data."
+        },
+        "latency_ms": 2986.5230769999016,
+        "input_tokens": 324,
+        "output_tokens": 214
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "question": "What is the current price in pool 8abc?",
+        "expected_question_type": "pool_data",
+        "expected_use_rag": false,
+        "expected_tools": [
+          "get_pool"
+        ]
+      },
+      "actual": {
+        "question": "What is the current price in pool 8abc?",
+        "decision": {
+          "question_type": "pool_data",
+          "use_rag": false,
+          "tools": [
+            "get_pool"
+          ],
+          "explanation": "The user requests current data for a specific pool (8abc), so a live pool fetch is required."
+        },
+        "latency_ms": 3714.1509020000285,
+        "input_tokens": 324,
+        "output_tokens": 296
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "question": "Explain bin step and show its value for pool 8abc.",
+        "expected_question_type": "combined",
+        "expected_use_rag": true,
+        "expected_tools": [
+          "get_pool"
+        ]
+      },
+      "actual": {
+        "question": "Explain bin step and show its value for pool 8abc.",
+        "decision": {
+          "question_type": "combined",
+          "use_rag": true,
+          "tools": [
+            "get_pool"
+          ],
+          "explanation": "The user requests both a conceptual explanation and the current value for a specific pool, so documentation and pool data are needed."
+        },
+        "latency_ms": 3461.7215010000564,
+        "input_tokens": 326,
+        "output_tokens": 254
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "question": "How do dynamic fees work and what are the current fees for pool 8abc?",
+        "expected_question_type": "combined",
+        "expected_use_rag": true,
+        "expected_tools": [
+          "get_pool"
+        ]
+      },
+      "actual": {
+        "question": "How do dynamic fees work and what are the current fees for pool 8abc?",
+        "decision": {
+          "question_type": "combined",
+          "use_rag": true,
+          "tools": [
+            "get_pool"
+          ],
+          "explanation": "The user asks both how dynamic fees work (documentation) and the current fees for pool 8abc (live pool data), so both are required."
+        },
+        "latency_ms": 4468.913953000083,
+        "input_tokens": 330,
+        "output_tokens": 304
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "question": "Explain the active bin and tell me the active bin for pool 8abc.",
+        "expected_question_type": "combined",
+        "expected_use_rag": true,
+        "expected_tools": [
+          "get_pool"
+        ]
+      },
+      "actual": {
+        "question": "Explain the active bin and tell me the active bin for pool 8abc.",
+        "decision": {
+          "question_type": "combined",
+          "use_rag": true,
+          "tools": [
+            "get_pool"
+          ],
+          "explanation": "The user asked how the active bin works (documentation) and requested the current active bin for a specific pool (pool 8abc)."
+        },
+        "latency_ms": 4201.203904000067,
+        "input_tokens": 329,
+        "output_tokens": 322
+      },
+      "error": null
+    },
+    {
+      "case": {
+        "question": "Why can a narrow range be risky for the current state of pool 8abc?",
+        "expected_question_type": "combined",
+        "expected_use_rag": true,
+        "expected_tools": [
+          "get_pool"
+        ]
+      },
+      "actual": {
+        "question": "Why can a narrow range be risky for the current state of pool 8abc?",
+        "decision": {
+          "question_type": "combined",
+          "use_rag": true,
+          "tools": [
+            "get_pool"
+          ],
+          "explanation": "The user asks why a narrow range is risky (conceptual explanation) specifically for the current state of pool 8abc, so both documentation and current pool data are needed."
+        },
+        "latency_ms": 3726.8252469998515,
+        "input_tokens": 330,
+        "output_tokens": 270
+      },
+      "error": null
+    }
+  ]
+}

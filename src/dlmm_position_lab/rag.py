@@ -50,12 +50,13 @@ def answer_documentation_question(
         model=model or chat_model(),
         instructions=DOCUMENTATION_SYSTEM_PROMPT,
         input=prompt,
-        max_output_tokens=500,
+        max_output_tokens=1_200,
     )
     answer_text = response.output_text.strip()
     if not answer_text:
         raise RuntimeError("OpenAI returned an empty answer")
 
+    usage = getattr(response, "usage", None)
     return Answer(
         answer=answer_text,
         sources=[
@@ -69,4 +70,6 @@ def answer_documentation_question(
         ],
         retrieved_document_ids=[result.id for result in results],
         latency_ms=(clock() - started) * 1_000,
+        input_tokens=getattr(usage, "input_tokens", 0),
+        output_tokens=getattr(usage, "output_tokens", 0),
     )

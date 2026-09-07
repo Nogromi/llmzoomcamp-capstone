@@ -1,0 +1,22 @@
+[
+  {
+    "question": "What is a bin step and how does its size affect a pool?",
+    "expected_document_ids": ["43d50f4a6e86ef4910b6e7d5"]
+  },
+  {
+    "question": "How do DLMM dynamic fees respond to volatility?",
+    "expected_document_ids": ["bafdbab0259d79061dc8b01b"]
+  },
+  {
+    "question": "Can a Dynamic Position be resized without closing it?",
+    "expected_document_ids": ["00484ce4c11493a3a3b1bce9"]
+  },
+  {
+    "question": "What happens to mining rewards when the active bin has no liquidity?",
+    "expected_document_ids": ["be95a27213b1b1ff0d5f49e4"]
+  },
+  {
+    "question": "How does OnlyY fee collection work?",
+    "expected_document_ids": ["a5a3e12f0122e406c5940232"]
+  }
+]

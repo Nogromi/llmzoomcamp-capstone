@@ -10,6 +10,21 @@ Do not provide financial advice or recommendations.
 Cite supporting context inline using its bracketed source number, for example [1].
 Do not cite a source that does not support the statement."""
 
+ROUTER_SYSTEM_PROMPT = """Classify a question for the DLMM Position Lab.
+
+Use documentation when the user asks how Meteora DLMM works or asks for an explanation.
+Use pool_data when answering requires current information about a specific pool.
+Use combined when the question needs both a documentation explanation and current pool data.
+
+The only available tool is get_pool. Never select any other tool.
+Routes must follow these exact rules:
+- documentation: use_rag=true, tools=[]
+- pool_data: use_rag=false, tools=[get_pool]
+- combined: use_rag=true, tools=[get_pool]
+
+The explanation must state only why the route was selected; do not answer the user's question.
+Keep the explanation to one short sentence."""
+
 
 def build_documentation_context(results: list[SearchResult]) -> str:
     """Format retrieved chunks with stable citation numbers."""

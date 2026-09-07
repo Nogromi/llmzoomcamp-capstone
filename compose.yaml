@@ -14,6 +14,8 @@ services:
       OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
       OPENAI_EMBEDDING_DIMENSIONS: ${OPENAI_EMBEDDING_DIMENSIONS:-512}
       OPENAI_CHAT_MODEL: ${OPENAI_CHAT_MODEL:-gpt-5-mini}
+      METEORA_API_BASE_URL: ${METEORA_API_BASE_URL:-https://dlmm.datapi.meteora.ag}
+      APP_DB_PATH: ${APP_DB_PATH:-data/application.db}
 
     depends_on:
       elasticsearch:
@@ -23,6 +25,7 @@ services:
 
     volumes:
       - ./data:/app/data
+      - ./evaluation:/app/evaluation
 
 
   elasticsearch:

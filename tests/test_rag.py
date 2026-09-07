@@ -41,7 +41,7 @@ def test_rag_returns_grounded_answer_sources_ids_and_latency() -> None:
     assert request["model"] == "test-model"
     assert request["instructions"] == DOCUMENTATION_SYSTEM_PROMPT
     assert "[1] Title one — Section one" in request["input"]
-    assert request["max_output_tokens"] == 500
+    assert request["max_output_tokens"] == 1_200
     assert answer.answer == "A grounded answer [1]."
     assert answer.retrieved_document_ids == ["one", "two"]
     assert [source.document_id for source in answer.sources] == ["one", "two"]
