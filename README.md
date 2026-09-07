@@ -8,31 +8,44 @@ Built with Python, Streamlit, Elasticsearch, OpenAI, and SQLite. Pool access is 
 
 ```mermaid
 flowchart TD
-    Docs[Official Meteora Markdown docs] --> Ingest[Download, clean, chunk]
-    Ingest --> JSON[data/documents.json]
-    Ingest --> Embed[OpenAI embeddings]
-    Embed --> ES[(Elasticsearch)]
+    subgraph Indexing[Ingestion: flows/ingest_docs.py]
+        Docs[Meteora llms.txt and DLMM Markdown] --> Chunks[Clean and chunk pages]
+        Chunks --> Embed[OpenAI document embeddings]
+        Embed --> ES[(Elasticsearch: chunks and vectors)]
+        Chunks --> JSON[data/documents.json snapshot]
+    end
 
-    User[Question with pool address or optional default] --> UI[Streamlit]
-    UI --> Search[BM25 + vector search]
-    ES --> Search
-    Search --> RRF[Reciprocal Rank Fusion: top 5 chunks]
-    RRF --> LLM[OpenAI with get_pool tool]
-    LLM -->|Function call: address argument| Tool[Python executes get_pool]
-    Tool --> Pool[Meteora pool API]
-    Pool --> Result[Function result linked by call_id]
-    Result --> Answer[OpenAI final answer]
-    LLM -->|No tool needed| Answer
-    Answer --> UI
-    UI -->|Requests, latency, feedback| DB[(SQLite)]
+    subgraph Chat[Chat: app.py, retrieval.py, rag.py]
+        Input[Streamlit question and optional sidebar address] --> Search[Search documentation for the question]
+        Search --> BM25[BM25: top 10 chunks]
+        Search --> QueryEmbed[OpenAI query embedding]
+        QueryEmbed --> Vector[Vector search: top 10 chunks]
+        ES --> BM25
+        ES --> Vector
+        BM25 --> RRF[Python rank fusion: top 5 chunks]
+        Vector --> RRF
+        RRF --> LLM[OpenAI: question, address, sources, get_pool tool]
+        LLM -->|Answer without a tool| Log[Record request in SQLite]
+        LLM -->|Native function call| Validate[Validate tool name and supplied address]
+        Validate -->|Valid| Pool[get_pool: read Meteora pool API]
+        Validate -->|Invalid| Result[Tool result: data or error]
+        Pool --> Result
+        Result --> Final[Second OpenAI call: matching call_id, tools disabled]
+        Final --> Log
+        Log --> View[Show answer, sources, pool metrics, and tool trace]
+    end
+
+    Log --> DB[(SQLite: requests and feedback)]
+    View -->|Thumbs up or down| Feedback[Save feedback]
+    Feedback --> DB
     DB --> Monitor[Monitoring page]
-
-    Eval[Evaluation script] -.-> Search
-    Eval -.-> LLM
-    Eval -.-> Answer
 ```
 
-Ingestion discovers DLMM pages from Meteora's `llms.txt`, splits them by heading into roughly 900-character chunks with overlap, then builds the index. Each question retrieves documentation before the model answers or requests `get_pool(address="…")` through native function calling. Python executes the lookup and returns a `function_call_output` with the matching call ID. The model then writes the final answer. The MVP allows one pool lookup per question.
+Ingestion splits pages by heading into roughly 900-character chunks with 20 words of overlap. It embeds the chunks, rebuilds the Elasticsearch index, and saves a local JSON snapshot. Chat searches Elasticsearch; it does not read the snapshot.
+
+Every question first retrieves documentation, including questions about live pools. Python combines the top 10 keyword and vector results using Reciprocal Rank Fusion and sends up to five chunks to the model. A documentation answer uses one LLM call. If the model requests `get_pool(address="…")`, Python validates the request, looks up the pool, and sends the data or error back as `function_call_output` with the matching call ID. A second LLM call writes the answer with further tool calls disabled.
+
+The app logs requests, latency, LLM token counts, and tool traces in SQLite before displaying successful responses. Request exceptions are logged and shown as errors. Feedback is saved separately; the Monitoring page reads both tables. Evaluation runs separately from chat, as described below.
 
 ## Run with Docker
 
