@@ -1,6 +1,6 @@
 # DLMM Position Lab
 
-A small LLM Zoomcamp project for learning how Meteora DLMM pools work. Ask questions against official documentation, look up current pool data, and explore a price range using your own observations.
+An educational application for learning how Meteora DLMM pools work. Get answers grounded in official documentation and look up current pool data. Built as a course project for [LLM Zoomcamp](https://github.com/DataTalksClub/llm-zoomcamp).
 
 Built with Python, Streamlit, Elasticsearch, OpenAI, and SQLite. Pool access is read-only; the app gives educational explanations, not investment recommendations.
 
@@ -27,14 +27,12 @@ flowchart TD
     UI -->|Requests, latency, feedback| DB[(SQLite)]
     DB --> Monitor[Monitoring page]
 
-    Prices[User-supplied prices + range] --> Calc[Python range calculations]
-    Calc --> UI
-    Eval[Offline evaluation script] -.-> Search
+    Eval[Evaluation script] -.-> Search
     Eval -.-> LLM
     Eval -.-> Answer
 ```
 
-Ingestion discovers DLMM pages from Meteora's `llms.txt`, splits them by heading into roughly 900-character chunks with overlap, then builds the index. Each question retrieves documentation before the model answers or requests `get_pool(address="…")` through native function calling. Python executes the lookup and returns a `function_call_output` with the matching call ID. The model then writes the final answer. The MVP allows one pool lookup per question; the range calculator runs locally without an LLM.
+Ingestion discovers DLMM pages from Meteora's `llms.txt`, splits them by heading into roughly 900-character chunks with overlap, then builds the index. Each question retrieves documentation before the model answers or requests `get_pool(address="…")` through native function calling. Python executes the lookup and returns a `function_call_output` with the matching call ID. The model then writes the final answer. The MVP allows one pool lookup per question.
 
 ## Run with Docker
 
@@ -72,39 +70,31 @@ uv run streamlit run src/dlmm_position_lab/app.py
 
 ## Demo
 
-Screenshots to be added. Save images in `docs/images/` and uncomment the matching image lines below, or replace them with uploaded image links.
-
 ### Documentation chat
 
-Ask **“What is a bin step?”** and expand **Sources** to show the answer and supporting documentation.
+Ask **“What is a bin step?”** to get an explanation with numbered citations. Expand **Sources** to open the supporting documentation.
 
-<!-- ![Documentation answer with sources](docs/images/chat.png) -->
+![Documentation answer with sources](docs/images/chat.png)
 
 ### Live pool information
 
-Ask **“What is the current TVL of pool YOUR_POOL_ADDRESS?”** with a real address. Capture the answer, pool metrics, and expanded **Function call** panel showing the model's `get_pool` request, address argument, and result.
+Ask **“What is the current TVL of pool YOUR_POOL_ADDRESS?”**, replacing `YOUR_POOL_ADDRESS` with a Meteora DLMM pool address. The response includes pool metrics. The expanded **Function call** panel shows the model's `get_pool` request, address argument, and API result.
 
-<!-- ![Current pool information from Meteora](docs/images/pool.png) -->
+![Current pool information from Meteora](docs/images/pool.png)
 
 The model selects the tool and its address argument. An address in the message takes priority over the optional sidebar default. If no address is supplied, the assistant asks for one. See [rag.py](src/dlmm_position_lab/rag.py) for the tool schema and execution flow.
 
 ### Documentation and pool data together
 
-Ask **“Explain bin steps and show the bin step for pool YOUR_POOL_ADDRESS.”** Capture the explanation, expanded sources, and current pool metrics in the same response.
+Ask **“Explain bin steps and show the bin step for pool YOUR_POOL_ADDRESS.”** The answer combines a cited explanation with the pool's bin step from Meteora's API.
 
-<!-- ![Answer combining documentation and current pool data](docs/images/combined.png) -->
-
-### Range calculator
-
-Use **Range lab** with `100, 105, 111, 108, 99` and boundaries `100–110`. Capture the chart and results: **60%** of observations inside the range and **two exits**.
-
-<!-- ![Price range chart and calculated statistics](docs/images/range.png) -->
+![Answer combining documentation and current pool data](docs/images/combined.png)
 
 ### Monitoring and tool execution
 
-Rate an answer, then open **Monitoring**. Capture usage, latency, feedback, and the pool request row. `tools_called` lists `get_pool`; `tool_calls` records its call ID, arguments, result, and success or error status. Existing SQLite databases are updated automatically to store this trace.
+Rate an answer, then open **Monitoring** to see request counts, latency, feedback, and errors. In the request table, `tools_called` lists `get_pool`; `tool_calls` records its call ID, arguments, result, and success or error status.
 
-<!-- ![Monitoring metrics and recorded get_pool execution](docs/images/monitoring.png) -->
+![Monitoring metrics and recorded get_pool execution](docs/images/monitoring.png)
 
 Chat history is displayed for the session; each question is answered independently. Repeat the address in a later question or set the optional sidebar default.
 
@@ -135,20 +125,14 @@ Saved evaluation: hybrid Hit Rate@5 **1.00**, MRR **0.783**, RAG checks **5/5**,
 ```text
 flows/ingest_docs.py                   Download, chunk, embed, and index
 src/dlmm_position_lab/
-    app.py                            Chat and range UI
+    app.py                            Documentation chat and pool lookup UI
     retrieval.py                      Embeddings, BM25, vector search, RRF
     rag.py                            Native get_pool tool and grounded answers
-    analytics.py                      Range calculations
     storage.py                        SQLite requests and feedback
     pages/monitoring.py               Usage dashboard
 evaluation/
     evaluate.py                       Retrieval, RAG, and tool-call evaluation
     *_questions.json / questions.json Reviewed questions
 data/                                 Generated chunks and SQLite database
+docs/images/                          Demo screenshots
 ```
-
-The MVP uses plain scripts and functions, one native function tool, and two Docker services. Its structure follows the small modules in [Yoga Assistant](https://github.com/pranabsarma18/yoga-assistant) and the retrieval, feedback, and evaluation flow in [LifeStyled](https://github.com/thesalmajudah/lifestyled-ai).
-
-## Development note
-
-Parts of this project's code and documentation were developed with help from OpenAI Codex, including the MVP refactor and README updates.

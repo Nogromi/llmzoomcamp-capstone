@@ -1,4 +1,4 @@
-"""Streamlit chat, range calculator, and feedback."""
+"""Streamlit documentation chat, pool lookup, and feedback."""
 
 from time import perf_counter
 
@@ -8,7 +8,6 @@ from elastic_transport import TransportError
 from elasticsearch import ApiError
 from openai import OpenAIError
 
-from dlmm_position_lab.analytics import analyze_range
 from dlmm_position_lab.rag import answer_question
 from dlmm_position_lab.storage import record_request, save_feedback
 
@@ -85,59 +84,17 @@ def render_chat(pool_address: str) -> None:
             render_response(item)
 
 
-def render_range_lab() -> None:
-    st.caption("Explore a price range using your own observations.")
-    with st.form("range"):
-        prices_text = st.text_area(
-            "Closing prices, separated by commas", "100, 105, 111, 108, 99"
-        )
-        lower = st.number_input("Lower price", value=100.0)
-        upper = st.number_input("Upper price", value=110.0)
-        submitted = st.form_submit_button("Analyze range")
-    if submitted:
-        try:
-            prices = [float(value.strip()) for value in prices_text.split(",")]
-            result = analyze_range(prices, lower, upper)
-        except ValueError as error:
-            st.error(str(error))
-            return
-        st.line_chart(
-            {
-                "Price": prices,
-                "Lower": [lower] * len(prices),
-                "Upper": [upper] * len(prices),
-            }
-        )
-        first, second, third = st.columns(3)
-        first.metric("Inside observations", f"{result['percentage_inside_range']:.1f}%")
-        second.metric("Range exits", result["number_of_range_exits"])
-        third.metric("Current price", f"{result['current_price']:g}")
-        st.write(
-            "Current price is "
-            + ("inside" if result["inside_range"] else "outside")
-            + " the range."
-        )
-        st.caption(
-            f"Range width: {result['range_width']:g} · "
-            f"Observed min / max: {result['min_price']:g} / {result['max_price']:g}"
-        )
-
-
 def main() -> None:
     st.set_page_config(page_title="DLMM Position Lab", layout="wide")
     st.title("DLMM Position Lab")
-    st.write("Ask about Meteora DLMM, look up a pool, or explore a price range.")
+    st.write("Ask about Meteora DLMM or look up current pool information.")
     with st.sidebar:
         pool_address = st.text_input(
             "Default pool address (optional)",
             help="You can also paste an address in your question. An address in the question takes priority.",
         )
         st.page_link("pages/monitoring.py", label="Monitoring")
-    chat, range_lab = st.tabs(["Chat", "Range lab"])
-    with chat:
-        render_chat(pool_address)
-    with range_lab:
-        render_range_lab()
+    render_chat(pool_address)
 
 
 if __name__ == "__main__":

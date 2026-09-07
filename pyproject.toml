@@ -1,7 +1,7 @@
 [project]
 name = "dlmm-position-lab"
 version = "0.1.0"
-description = "A small Meteora DLMM documentation assistant and range calculator"
+description = "A small Meteora DLMM documentation assistant with live pool lookup"
 readme = "README.md"
 authors = [
     { name = "Anatolii Kryvko", email = "anatolii.krivko@gmail.com" }
