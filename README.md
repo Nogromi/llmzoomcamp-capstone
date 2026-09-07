@@ -33,12 +33,13 @@ flowchart TD
         Result --> Final[Second OpenAI call: matching call_id, tools disabled]
         Final --> Log
         Log --> View[Show answer, sources, pool metrics, and tool trace]
+
+        Log --> DB[(SQLite: requests and feedback)]
+        View -->|Thumbs up or down| Feedback[Save feedback]
+        Feedback --> DB
+        DB --> Monitor[Monitoring page]
     end
 
-    Log --> DB[(SQLite: requests and feedback)]
-    View -->|Thumbs up or down| Feedback[Save feedback]
-    Feedback --> DB
-    DB --> Monitor[Monitoring page]
 ```
 
 Ingestion splits pages by heading into roughly 900-character chunks with 20 words of overlap. It embeds the chunks, rebuilds the Elasticsearch index, and saves a local JSON snapshot. Chat searches Elasticsearch; it does not read the snapshot.
